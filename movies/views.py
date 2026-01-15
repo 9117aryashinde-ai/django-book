@@ -11,10 +11,21 @@ def movie_list(request):
     if search_query:
 
         # This line will provide the name of all the movies containing the search text
-        movies = Movie.objects.filter(name_icontains=search_query) # i_contains represents case-insensitive search
+        # Movie.objects.filter is used for fetching the movies from the database
+        movies = Movie.objects.filter(name__icontains=search_query) # i_contains represents case-insensitive search
     else:
         # if no search is done show all movies
         movies = Movie.objects.all()
+
+    genre = request.GET.get('genre')
+    language = request.GET.get('language')
+
+    if genre:
+        # movies.filter is used for refining the movies that we already have
+        movies = movies.filter(genre__iexact=genre) # __iexact refers to case insensitive exact match
+
+    if language:
+        movies = movies.filter(language__iexact=language)
 
     # sending data to the template
     return render(request, 'movies/movie_list.html', {'movies':movies})
