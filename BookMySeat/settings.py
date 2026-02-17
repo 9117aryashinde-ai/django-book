@@ -153,5 +153,5 @@ EMAIL_HOST = 'smtp.gmail.com' # Gmail's email server
 EMAIL_PORT = 587 # Secure Port
 EMAIL_USE_TLS = True # Encrypt Email
 
-EMAIL_HOST_USER = 'bookmyseat97@gmail.com' # Sender's Email
-EMAIL_HOST_PASSWORD = 'seot xadi vrlp iqjo' # App Password
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') # Sender's Email
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # App Password
