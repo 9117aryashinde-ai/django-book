@@ -3,6 +3,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Theater, Seat, Booking
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
+from django.core.mail import send_mail # django's built in function to send mails
+from django.conf import settings # allows us to access EMAIL_HOST_USER (sender email)
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 # Create your views here.
 
@@ -46,6 +50,7 @@ def book_seats(request, theater_id):
         error_seats = []
         if not selected_Seats:
             return render(request, 'movies/seat_selection.html', {'theater':theaters, 'seats':seats, 'error':'No seat selected'})
+        newly_booked_seats = []
         for seat_id in selected_Seats:
             seat = get_object_or_404(Seat, id=seat_id, theater=theaters)
             if seat.is_booked:
@@ -60,10 +65,64 @@ def book_seats(request, theater_id):
                 )
                 seat.is_booked = True
                 seat.save()
+                newly_booked_seats.append(seat.seat_number)
             except IntegrityError:
                 error_seats.append(seat.seat_number)
+         
         if error_seats:
             error_message = f"The following seats are already booked:{',',join(error_seats)}"
             return render(request, 'movies/seat_selection.html', {'theater':theaters, 'seats':seats, 'error':'No seat selected'})
+        else:
+            # Preparing email details
+
+            email_context = {
+                "username" : request.user.username,
+                "movie_name" : theaters.movie.name, 
+                "theater_name" : theaters.name,
+                "seats" : newly_booked_seats,
+            }
+
+            subject = "Booking Confirmation"
+            from_email = settings.EMAIL_HOST_USER
+            recipient_list = [request.user.email]
+
+            html_content = render_to_string(
+                "emails/booking_confirmation.html",
+                email_context
+            )
+
+            # This block prepares the letter, the letter is not sent yet
+            # This block creates the plain text version
+            # This is for email clients that do not support html
+            email = EmailMultiAlternatives(
+                subject,
+                "", # this string can be used to add the plain text message for the clients that do not support html
+                recipient_list
+            )
+
+            # This line tells that this line has an html version
+            email.attach_alternative(html_content, "text/html")
+
+            # while sending the mail both the plain text one and the html one are sent the client now decides which one it supports.
+            email.send()
+
+            
+            # This block is commented because this block sends email in the text form (no style)
+            # message = (
+            #     f"Hello {request.user.username}, \n\n"
+            #     f"Your Booking is Confirmed!\n\n"
+            #     f"Movie: {theaters.movie.name}\n"
+            #     f"Theater: {theaters.name}\n"
+            #     f"Seats: {', '.join(newly_booked_seats)}\n\n"
+            #     f"Enjoy your movie!"
+            # )
+
+            # send_mail(
+            #     subject,
+            #     message,
+            #     from_email,
+            #     recipient_list,
+            #     fail_silently=False
+            # )
         return redirect('profile')
     return render(request, 'movies/seat_selection.html', {'theaters':theaters, 'seats':seats})

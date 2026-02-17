@@ -3,6 +3,9 @@ from django.db import models
 # django creates user model by default including the username, email, password
 from django.contrib.auth.models import User
 
+# models.py define the tables in the database
+# Movie, Theater, Seat and Booking all define tables in the database.
+
 class Movie(models.Model):
     name = models.CharField(max_length=255)
     image = models.ImageField(upload_to='movies/')

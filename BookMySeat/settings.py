@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ux3q%vx_i4q(b8t&apdd1l-*+a586+yik6f1c&d7gz1-v#spw$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -58,7 +58,7 @@ MIDDLEWARE = [
 ]
 
 AUTH_USER_MODEL = 'auth.User'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -92,7 +92,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-DATABASES['default'] = dj_database_url.parse('postgresql://django_bookmyseat_9ykr_user:gpZBp9nDZcvv6XLOofKNRxoXmBZNlPBT@dpg-d5ig9bpr0fns73b85h10-a.virginia-postgres.render.com/django_bookmyseat_9ykr')
+DATABASES['default'] = dj_database_url.parse('postgresql://bookmyseat_z6ht_user:8F0NMV6BYmygc0g7N8VCrNpwRQ53PYQL@dpg-d69vjc0gjchc73cnce10-a.virginia-postgres.render.com/bookmyseat_z6ht')
 # 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -134,3 +134,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# USE SMTP TO SEND EMAILS
+
+EMAIL_HOST = 'smtp.gmail.com' # Gmail's email server
+EMAIL_PORT = 587 # Secure Port
+EMAIL_USE_TLS = True # Encrypt Email
+
+EMAIL_HOST_USER = 'bookmyseat97@gmail.com' # Sender's Email
+EMAIL_HOST_PASSWORD = 'seot xadi vrlp iqjo' # App Password

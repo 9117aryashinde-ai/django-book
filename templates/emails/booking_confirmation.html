@@ -1,0 +1,35 @@
+<!-- This template do not start with a block content and end with an end block -->
+<!-- This is a standalone email template -->
+<!-- It does not represents a web page -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: lightgray; padding: 20px;">
+    <div style="max-width: 500px; background: white; padding: 20px; margin: auto; border-radius: 6px;">
+        <h2 style="color: black;">Hello {{ username }},</h2>
+
+        <p>Your booking has been <strong>confirmed successfully</strong></p>
+
+        <hr>
+
+        <p><strong>Movie:</strong> {{ movie_name }}</p>
+        <p><strong>Theater:</strong> {{ theater_name }}</p>
+        <p>
+            <strong>Seats: </strong>
+            {% for seat in seats %}
+                {{seat}}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+
+        <hr>
+
+        <p>Enjoy your Movie</p>
+        <p style="color: rgb(152, 152, 152);">BookMySeat</p>
+    </div>
+</body>
+</html>
