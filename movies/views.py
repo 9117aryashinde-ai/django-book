@@ -96,7 +96,8 @@ def book_seats(request, theater_id):
             # This is for email clients that do not support html
             email = EmailMultiAlternatives(
                 subject,
-                "", # this string can be used to add the plain text message for the clients that do not support html
+                "Your booking is confirmed", # this string can be used to add the plain text message for the clients that do not support html
+                from_email,
                 recipient_list
             )
 
