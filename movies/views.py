@@ -127,3 +127,11 @@ def book_seats(request, theater_id):
             # )
         return redirect('profile')
     return render(request, 'movies/seat_selection.html', {'theaters':theaters, 'seats':seats})
+
+def movie_detail(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    theater = Theater.objects.first()
+    return render(request, 'movies/movie_detail.html', {
+        'movie': movie,
+        'theater': theater
+    })

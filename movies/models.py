@@ -14,6 +14,7 @@ class Movie(models.Model):
     description = models.TextField(blank=True, null=True) # optional
     genre = models.CharField(max_length=255, blank=True, null=True)
     language = models.CharField(max_length=255, blank=True, null=True)
+    trailer_url = models.TextField(blank=True, null=True) # optional
 
     def __str__(self):
         return self.name

@@ -8,4 +8,5 @@ urlpatterns = [
     # we can change the path to this too
     # 'theater/<int:theater_id>/book-seats'
     path('theater/<int:theater_id>/seats/book', views.book_seats, name='book_seats'),
+    path('<int:movie_id>/', views.movie_detail, name='movie_detail'),
 ]

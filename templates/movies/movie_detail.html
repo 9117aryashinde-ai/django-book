@@ -1,0 +1,254 @@
+{% extends "users/basic.html" %}
+
+{% block content %}
+
+    </div> <!-- Closing the container if basic.html opens it due to layout issues -->
+    <div class="movie-content">
+        <div class="bg-blur" style="background-image: url('{{ movie.image.url }}');"></div>
+        <div class="movie-info">
+            <div class="movie-poster">
+                <img src="{{ movie.image.url }}" alt="{{ movie.name }}">
+            </div>
+            <div class="movie-details">
+                <h1><b>{{ movie.name }}</b></h1>
+                <!-- <br> -->
+                <div class="rating-card">
+                    <i class="fas fa-star star"></i> 
+                    <span class="rating-value">{{movie.rating}}/10</span> <!-- Span allows styling specific parts -->
+                    <span class="rating">Rating</span>
+                </div>
+                <div class="metadata">
+                    <span class="dot">•</span>
+                    <span class="genre">{{movie.genre}}</span>
+                    <span class="dot">•</span>
+                    <span class="language">{{movie.language}}</span>
+                </div>
+                <div class="trailer-btn">
+                    <button class= "trailer" onclick="openTrailer()">Watch Trailer</button>
+                </div>
+                <div class="book-btn">
+                    <a href="{% url 'theater_list' movie.id %}">
+                        <button class="book" type="submit">Book Tickets</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="movie-description">
+        <div>
+            <p>{{movie.description}}</p>
+        </div>
+    </div>
+
+    <div id="trailerModal" class="trailer-modal">
+        <div class="trailer-content">
+            <span class="close-btn" onclick="closeTrailer()">✖</span>
+
+            <!-- Loads the YouTube video -->
+            <iframe 
+                id="tFrame"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+    <style>
+        /* Fixing the horizontal scroll */
+        body {
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .movie-content {
+            /* padding-top: 12px; */
+            position: relative;
+            height: 500px;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .bg-blur {
+            position:absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+
+            filter: blur(20px);
+            transform: scale(1.1);
+            z-index: 1;
+        }
+        /* blurring the img */
+        /* Creates a blur duplicate layer */
+        .bg-blur::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(24, 23, 23, 0.5);
+        }
+
+        .movie-info {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: auto;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            padding: 0 20px;
+        }
+
+        .movie-poster img{
+            height: 400px;
+            width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .movie-details h1 {
+            /* padding-top: 12px; */
+            font-size: 50px;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .rating-card {
+            display: flex;
+            align-items: center;
+            /* justify-content: space-between; */
+            gap: 12px;
+
+            width: 350px;
+            padding: 12px 20px;
+
+            border: 1px solid white;
+            border-radius: 12px;
+
+            background: rgb(16, 16, 16);
+            opacity: 0.8;
+        }
+
+        .rating-value {
+            color: white;
+            font-size: 25px;
+        }
+
+        .star {
+            color: yellow;
+            font-size: 20px;
+        }
+
+        .rating {
+            color: white;
+            font-size: 25px;
+        }
+
+        .metadata {
+            padding-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .genre {
+            font-size: 20px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .language {
+            font-size: 20px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .dot {
+            color: white;
+        }
+
+        .trailer-btn {
+            padding-top: 25px;
+        }
+
+        .trailer {
+            background: rgb(29, 91, 236);
+            color: white;
+            border: transparent;
+            border-radius: 12px;
+            font-size: 20px;
+            padding: 12px 18px;
+            width: 300px;
+        }
+
+        .book-btn {
+            padding-top: 13px;
+        }
+
+        .book {
+            background: rgb(222, 63, 63);
+            color: white;
+            border: transparent;
+            border-radius: 12px;
+            font-size: 20px;
+            padding: 12px 18px;
+            width: 300px;
+        }
+
+        .movie-description {
+            font-size: 18px;
+            color: black;
+            max-width: 500px;
+            /* margin: 40px auto;  auto left and right margins centers the container automatically */
+            text-align: left;
+            display: flex;
+        }
+
+        .trailer-modal {
+            display : none;
+            inset: 0;
+            position: fixed;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000; /* Ensures that the modal appears above all the page elements */
+            justify-content: center; /* Centering the trailer player horizontally */
+            align-items: center; /* Centering the trailer player vertically */
+        }
+
+        .trailer-content {
+            position: relative;
+            width: 70%;
+            max-width: 900px;
+        }
+
+        .trailer-content iframe {
+            width: 100%; /* Covers the whole trailer container*/
+            height: 500px; 
+            border-radius: 12px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            font-size: 25px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+
+    <script>
+        function openTrailer() {
+            document.getElementById("trailerModal").style.display = "flex";
+            document.getElementById("tFrame").src=
+                "https://www.youtube-nocookie.com/embed/{{ movie.trailer_url }}?autoplay=1";
+        }
+
+        function closeTrailer() {
+            document.getElementById("trailerModal").style.display = "none";
+            document.getElementById("tFrame").src="";
+        }
+
+    </script>
+
+{% endblock %}
