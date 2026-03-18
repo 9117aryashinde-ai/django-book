@@ -30,6 +30,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
+    'django-bookmyseat-zz34.onrender.com',
     '*.vercel.app',
 ]
 
@@ -45,9 +46,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users',
     'movies',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -163,3 +166,7 @@ EMAIL_HOST_USER = 'bookmyseat97@gmail.com' # Sender's Email
 EMAIL_HOST_PASSWORD = 'seot xadi vrlp iqjo' # App Password
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+CORS_ALLOWED_ORIGINS = [
+    'https://django-book-fawn.vercel.app/'
+]
