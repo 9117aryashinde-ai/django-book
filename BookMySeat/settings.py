@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ux3q%vx_i4q(b8t&apdd1l-*+a586+yik6f1c&d7gz1-v#spw$'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ux3q%vx_i4q(b8t&apdd1l-*+a586+yik6f1c&d7gz1-v#spw$')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -34,6 +34,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
+    'django-book-fawn.vercel.app',
     '*.vercel.app',
 ]
 
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -171,15 +173,14 @@ EMAIL_PORT = 587 # Secure Port
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-EMAIL_HOST_USER = 'bookmyseat97@gmail.com' # Sender's Email
-EMAIL_HOST_PASSWORD = 'seot xadi vrlp iqjo' # App Password
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') # Sender's Email
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # App Password
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Razorpay APIs
-RAZORPAY_KEY_ID = 'rzp_test_SVjYSnJITiMtKd'
-RAZORPAY_SECRET_KEY = 'qMc8VL9tQI2Ybn4DGP5HHoJl'
-
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
+RAZORPAY_SECRET_KEY = os.getenv('RAZORPAY_SECRET_KEY')
 CELERY_BEAT_SCHEDULE = {
     'release-expired-reservations': {
         'task': 'movies.tasks.release_expired_reservations',
