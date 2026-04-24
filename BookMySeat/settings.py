@@ -35,7 +35,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'django-book-fawn.vercel.app',
-    '*.vercel.app',
+    '.vercel.app',
 ]
 
 # Celery Configurations
