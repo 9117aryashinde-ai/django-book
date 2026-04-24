@@ -1,0 +1,334 @@
+{% extends "users/basic.html" %}
+
+{% block content %}
+
+    <style>
+        .payment-wrapper {
+            min-height: 80vh;            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .payment-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 550px;
+            overflow: hidden;
+        }
+
+        .payement-header {
+            background: #111;
+            padding: 32px;
+            color: white;
+        }
+
+        .payement-header .label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .payement-header .title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .payement-body {
+            padding: 32px;
+        }
+
+        .amount-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .amount-row .desc {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .amount-row .price {
+            font-size: 22px;
+            font-weight: 600;
+            color: #111;
+        }
+
+        .divider {
+            height: 1px;
+            background: #f0f0f0;
+            margin: 24px 0;
+        }
+
+        .info-note {
+            font-size: 13px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .info-note span {
+            width: 18px;
+            height: 18px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #555;
+            flex-shrink: 0;
+        }
+
+        .btn-pay {
+            width: 100%;
+            padding: 16px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-pay:hover { background: #333; }
+
+        .btn-mock {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #888;
+            border: 1px dashed #ddd;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-mock:hover {
+            border-color: #aaa;
+            color: #555;
+        }
+
+        .secure-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #bbb;
+        }
+    </style>
+
+    <div class="payment-wrapper">
+        <div class="payment-card">
+
+            <div class="payment-header">
+                <div class="label">BookMySeat</div>
+                <h1 class="title">Complete your ticket booking</h1>
+            </div>
+
+            <div class="payment-body">
+                <div class="amount-row">
+                    <span class="desc">Total amount</span>
+                    <span class="price">₹{{ amount }}</span>
+                </div>
+
+                <div class="divider"></div>
+                <div class="info-note">
+                    <span>i</span>
+                    Your seat will be held for 5 minutes while you complete the payment
+                </div>
+                <button class="btn-pay" id="pay-btn">Pay Now</button>
+                <button class="btn-mock" id="mock-btn">Test: Simulate Payment Success</button>
+
+                <div class="secure-note">Secured by Razorpay</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sending hidden data to JS, JS uses this to call create_order (backend) -->
+    <input type="hidden" id="seat_id" value="{{ seat_id }}">
+    <input type="hidden" id="theater_id" value="{{ theater_id }}">
+    <input type="hidden" id="movie_id" value="{{ movie_id }}">
+    <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
+    <script>
+        document.getElementById("pay-btn").onclick=function() {
+            // alert("Pay button clicked"); used to check whether the pay button is clicked
+
+            // Fetching the values from the hidden inputs
+            let seat_id = document.getElementById("seat_id").value
+            let theater_id = document.getElementById("theater_id").value
+            let movie_id = document.getElementById("movie_id").value
+            let csrf_token = document.getElementById("csrf_token").value
+
+            // Reserve seat
+            fetch(`/movies/reserve-seat/${seat_id}/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrf_token
+                }
+            })
+            .then(response => response.json())
+            .then(reservationData => {
+                if (reservationData.error) {
+                    alert("Could not reserve seat: "+ reservationData.error);
+                    return;
+                }
+
+                console.log("Seat Reserved", reservationData);
+                let reservation_id = reservationData.reservation_id;
+
+                //  Create Razorpay order
+                fetch('/movies/create-order/', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": csrf_token
+                    },
+                    body: `seat_id=${seat_id}&theater_id=${theater_id}&movie_id=${movie_id}`
+                })
+                .then(response => response.json())
+                .then(data => {
+
+                    if (data.error) {
+                        alert("Could not create order: " + data.error);
+                        return;
+                    }
+
+                    console.log("Order created: ", data);
+
+                    // Open Razorpay
+                    var options = {
+                        "key": data.key,
+                        "amount": data.amount,
+                        "currency": "INR",
+                        "name": "BookMySeat",
+                        "description": "Movie Ticket Booking",
+                        "order_id": data.order_id,
+
+                        // Handle Payment success
+                        "handler": function(response) {
+                            fetch("/movies/payment/success/", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded",
+                                    "X-CSRFToken": csrf_token 
+                                },
+                                body: `razorpay_order_id=${response.razorpay_order_id}&razorpay_payment_id=${response.razorpay_payment_id}&razorpay_signature=${response.razorpay_signature}&reservation_id=${reservation_id}`
+                            })
+                            .then(res => res.json())
+                            .then(successData => {
+                                if (successData.error) {
+                                    alert("Payment verification failed: "+successData.error);
+                                }
+                                else {
+                                    alert("Payment Successful! Booking Confirmed.");
+                                    console.log("Booking Confirmed: ", successData);
+                                    // Redirect to booking confirmation page
+                                    window.location.href="/";
+                                }
+                            })
+                        },
+
+                        "modal": {
+                            "ondismiss": function() {
+                                fetch('/movies/payment/failed/', {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/x-www-form-urlencoded",
+                                        "X-CSRFToken": csrf_token 
+                                    },
+                                    body: `reservation_id=${reservation_id}`
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    console.log('Seat Released: ', data);
+                                    alert("Payment cancelled. Seat has been released");
+                                })
+                            }
+                        },
+
+                        "prefill": {
+                            "name": "Test User",
+                            "email": "test@example.com",
+                            "contact": "9999999999"
+                        },
+                    };
+
+                    var rzp = new Razorpay(options);
+                    rzp.on('payment.failed', function(response) {
+                        fetch('/movies/payment/failed', {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                                "X-CSRFToken": csrf_token 
+                            },
+                            body: `reservation_id=${reservation_id}`
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log('Seat Released:', data)
+                            alert('Payment failed. Seat has been released')
+                        })
+                    });
+
+                    rzp.open();
+                })
+                .catch(error => {
+                    console.error("Create order error: ", error);
+                });
+            })
+            .catch(error => {
+                console.error("Reserve seat error: ", error);
+            });
+        }
+
+        document.getElementById("mock-btn").onclick = function() {
+            let seat_id = document.getElementById("seat_id").value;
+            let csrf_token = document.getElementById("csrf_token").value;
+
+            // Reservae the seat
+            fetch(`/movies/reserve-seat/${seat_id}/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrf_token
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {alert('Reserve error: ' + data.error); return; }
+
+                let reservation_id = data.reservation_id;
+
+                fetch(`/movies/mock-successful-payment/${reservation_id}/`, {
+                    method: 'GET'
+                })
+                .then(res => res.json())
+                .then(result => {
+                    alert('Success: ' + result.message);
+                    console.log(result);
+                })
+            }) 
+        }
+    </script>
+{% endblock %}

@@ -36,9 +36,28 @@
     </div>
     <div class="movie-description">
         <div>
+            <h2>About the movie</h2>
+        </div>
+        <div>
             <p>{{movie.description}}</p>
         </div>
     </div>
+    <div class="movie-description">
+        <div>
+            <h2>Cast</h2>
+        </div>
+        <div>
+            <p>{{movie.cast}}</p>
+        </div>
+    </div>
+    <!-- <div>
+        <div class="movie-description">
+            <h2>You might also like</h2>
+        </div>
+        <div>
+            
+        </div>
+    </div> -->
 
     <div id="trailerModal" class="trailer-modal">
         <div class="trailer-content">
@@ -54,6 +73,9 @@
             </iframe>
         </div>
     </div>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
     <style>
         /* Fixing the horizontal scroll */
         body {
@@ -197,12 +219,16 @@
         }
 
         .movie-description {
+            font-family: 'Roboto', sans-serif;
             font-size: 18px;
-            color: black;
-            max-width: 500px;
-            /* margin: 40px auto;  auto left and right margins centers the container automatically */
-            text-align: left;
-            display: flex;
+            color: #424040;
+            max-width: 1200px;
+            margin: 50px auto;  /*auto left and right margins centers the container automatically*/
+            padding: 0 20px;
+            line-height: 1.6;
+
+            /* text-align: left;
+            display: flex; */
         }
 
         .trailer-modal {
@@ -239,9 +265,10 @@
 
     <script>
         function openTrailer() {
+            const currentOrigin = window.location.origin
             document.getElementById("trailerModal").style.display = "flex";
             document.getElementById("tFrame").src=
-                "https://www.youtube-nocookie.com/embed/{{ movie.trailer_url }}?autoplay=1";
+                "https://www.youtube-nocookie.com/embed/{{ movie.trailer_url }}?autoplay=1&origin=" + currentOrigin;
         }
 
         function closeTrailer() {

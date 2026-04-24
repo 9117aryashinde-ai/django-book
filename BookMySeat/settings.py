@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
+from celery.schedules import crontab
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,6 +37,11 @@ ALLOWED_HOSTS = [
     '*.vercel.app',
 ]
 
+# Celery Configurations
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'Asia/Kolkata'
+
 
 # Application definition
 
@@ -43,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
     'users',
     'movies',
 ]
@@ -86,13 +96,17 @@ WSGI_APPLICATION = 'BookMySeat.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 if DATABASE_URL :
     # For production purpose
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+        'default' : dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True
+        )
     }
 else:
     # For local testing
@@ -161,3 +175,14 @@ EMAIL_HOST_USER = 'bookmyseat97@gmail.com' # Sender's Email
 EMAIL_HOST_PASSWORD = 'seot xadi vrlp iqjo' # App Password
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Razorpay APIs
+RAZORPAY_KEY_ID = 'rzp_test_SVjYSnJITiMtKd'
+RAZORPAY_SECRET_KEY = 'qMc8VL9tQI2Ybn4DGP5HHoJl'
+
+CELERY_BEAT_SCHEDULE = {
+    'release-expired-reservations': {
+        'task': 'movies.tasks.release_expired_reservations',
+        'schedule': 60.0 # Runs every 60 seconds
+    },
+}

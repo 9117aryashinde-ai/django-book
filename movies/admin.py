@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Movie, Theater, Seat, Booking
+from .models import Movie, Theater, Seat, Booking, Payment, Reservation
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
@@ -15,4 +15,11 @@ class SeatAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ['user', 'seat', 'movie', 'theater', 'booked_at']
+    list_display = ['user', 'movie', 'theater', 'booked_at']
+
+    # def get_seats(self, obj):
+    #     return ", ".join([seat.seat_number for seat in obj.seats.all()])
+    
+    # get_seats.short_description = "Seats"
+
+admin.site.register(Reservation)
