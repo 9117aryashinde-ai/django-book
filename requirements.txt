@@ -57,5 +57,5 @@ wcwidth==0.6.0
 Werkzeug==3.1.3
 gunicorn
 whitenoise
-cloudinary
-django-cloudinary-storage
+cloudinary==1.44.2
+django-cloudinary-storage==0.3.0
