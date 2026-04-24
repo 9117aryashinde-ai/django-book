@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'users',
     'movies',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -187,3 +189,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 60.0 # Runs every 60 seconds
     },
 }
+
+# Cloudinary Settings
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
