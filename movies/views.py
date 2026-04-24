@@ -214,6 +214,16 @@ def reserve_seat(request, seat_id):
             # Locking the seat row
             seat = Seat.objects.select_for_update().get(id=seat_id)
 
+            expired = Reservation.objects.filter(
+                seat = seat,
+                status = 'RESERVED',
+                expires_at__lt = timezone.now()
+            )
+            if expired.exists():
+                expired.update(status='EXPIRED')
+                seat.is_booked = False
+                seat.save()
+
             # Check seat availability
             if seat.is_booked:
                 return JsonResponse({'error': 'Seat already booked'}, status=400)
@@ -227,15 +237,6 @@ def reserve_seat(request, seat_id):
 
             if active_reservation:
                 return JsonResponse({'error': 'Seat already reserved'}, status=400)
-            
-            # Create booking
-            # booking = Booking.objects.create(
-            #     user = request.user,
-            #     seat = seat,
-            #     movie = seat.theater.movie,
-            #     theater = seat.theater,
-            #     status = 'PENDING',
-            # )
 
             booking, created = Booking.objects.get_or_create(
                 seat = seat,
@@ -298,36 +299,36 @@ def payment_failed(request):
             return JsonResponse({'error': 'Reservation not found'}, status=404)
 
 # View for mocking successful payment
-def mock_successful_payment(request, reservation_id):
-    try:
-        reservation = Reservation.objects.get(id=reservation_id)
+# def mock_successful_payment(request, reservation_id):
+#     try:
+#         reservation = Reservation.objects.get(id=reservation_id)
 
-        # Confirm booking
-        booking = reservation.booking
-        booking.status = 'CONFIRMED'
-        booking.save()
+#         # Confirm booking
+#         booking = reservation.booking
+#         booking.status = 'CONFIRMED'
+#         booking.save()
 
-        # Save Reservation
-        reservation.status = 'COMPLETED'
-        reservation.save()
+#         # Save Reservation
+#         reservation.status = 'COMPLETED'
+#         reservation.save()
 
-        # Update seat
-        seat = reservation.seat
-        seat.is_booked = True
-        seat.save()
+#         # Update seat
+#         seat = reservation.seat
+#         seat.is_booked = True
+#         seat.save()
 
-        send_booking_confirmation(
-            user=reservation.user,
-            booking=booking,
-            seat=seat,
-            movie=booking.movie,
-            theater=booking.theater
-        )
+#         send_booking_confirmation(
+#             user=reservation.user,
+#             booking=booking,
+#             seat=seat,
+#             movie=booking.movie,
+#             theater=booking.theater
+#         )
 
-        return JsonResponse({'message': 'Mock Payment Successful', 'booking_id':booking.id}, status=200)
+#         return JsonResponse({'message': 'Mock Payment Successful', 'booking_id':booking.id}, status=200)
     
-    except Reservation.DoesNotExist:
-        return JsonResponse({'error': 'Reservation not found'}, status=404)
+#     except Reservation.DoesNotExist:
+#         return JsonResponse({'error': 'Reservation not found'}, status=404)
     
 def send_booking_confirmation(user, booking, seat, movie, theater):
     subject = f'Booking Confirmed - {movie.name} | BookMySeat'

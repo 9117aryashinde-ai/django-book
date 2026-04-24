@@ -13,5 +13,5 @@ urlpatterns = [
     path('reserve-seat/<int:seat_id>/', views.reserve_seat, name='reserve_seat'),
     path('payment/success/', views.payment_success, name='payment_success'),
     path('payment/failed/', views.payment_failed, name='payment_failed'),
-    path('mock-successful-payment/<int:reservation_id>/', views.mock_successful_payment, name='mock_successful_payment'),
+    # path('mock-successful-payment/<int:reservation_id>/', views.mock_successful_payment, name='mock_successful_payment'),
 ]

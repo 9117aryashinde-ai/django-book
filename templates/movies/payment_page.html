@@ -156,7 +156,7 @@
                     Your seat will be held for 5 minutes while you complete the payment
                 </div>
                 <button class="btn-pay" id="pay-btn">Pay Now</button>
-                <button class="btn-mock" id="mock-btn">Test: Simulate Payment Success</button>
+                <!-- <button class="btn-mock" id="mock-btn">Test: Simulate Payment Success</button> -->
 
                 <div class="secure-note">Secured by Razorpay</div>
             </div>
@@ -302,33 +302,33 @@
             });
         }
 
-        document.getElementById("mock-btn").onclick = function() {
-            let seat_id = document.getElementById("seat_id").value;
-            let csrf_token = document.getElementById("csrf_token").value;
+        // document.getElementById("mock-btn").onclick = function() {
+        //     let seat_id = document.getElementById("seat_id").value;
+        //     let csrf_token = document.getElementById("csrf_token").value;
 
-            // Reservae the seat
-            fetch(`/movies/reserve-seat/${seat_id}/`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": csrf_token
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {alert('Reserve error: ' + data.error); return; }
+        //     // Reservae the seat
+        //     fetch(`/movies/reserve-seat/${seat_id}/`, {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/x-www-form-urlencoded",
+        //             "X-CSRFToken": csrf_token
+        //         }
+        //     })
+        //     .then(res => res.json())
+        //     .then(data => {
+        //         if (data.error) {alert('Reserve error: ' + data.error); return; }
 
-                let reservation_id = data.reservation_id;
+        //         let reservation_id = data.reservation_id;
 
-                fetch(`/movies/mock-successful-payment/${reservation_id}/`, {
-                    method: 'GET'
-                })
-                .then(res => res.json())
-                .then(result => {
-                    alert('Success: ' + result.message);
-                    console.log(result);
-                })
-            }) 
-        }
+        //         fetch(`/movies/mock-successful-payment/${reservation_id}/`, {
+        //             method: 'GET'
+        //         })
+        //         .then(res => res.json())
+        //         .then(result => {
+        //             alert('Success: ' + result.message);
+        //             console.log(result);
+        //         })
+        //     }) 
+        // }
     </script>
 {% endblock %}
