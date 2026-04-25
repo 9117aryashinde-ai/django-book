@@ -39,7 +39,7 @@ def login_view(request):
 def profile(request):
     bookings = Booking.objects.filter(user = request.user)
     if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.POST)
+        u_form = UserUpdateForm(request.POST, instance=request.user)
         if u_form.is_valid():
             u_form.save()
             return redirect('profile')
