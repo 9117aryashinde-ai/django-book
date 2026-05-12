@@ -41,7 +41,7 @@ class Seat(models.Model):
 
 class Booking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    seat = models.OneToOneField(Seat, on_delete=models.CASCADE, null=True, blank=True)
+    seats = models.ManyToManyField(Seat, blank=True)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     theater = models.ForeignKey(Theater, on_delete=models.CASCADE)
     # totalAmount = models.IntegerField()

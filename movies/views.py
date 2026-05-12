@@ -58,24 +58,29 @@ def book_seats(request, theater_id):
         if not selected_Seats:
             return render(request, 'movies/seat_selection.html', {'theater':theaters, 'seats':seats, 'error':'No seat selected'})
 
-        seat_id = selected_Seats[0]
-        seat = get_object_or_404(Seat, id=seat_id, theater=theaters)
-
-        # Check if seat is already booked:
-        if seat.is_booked:
-            return render(request, 'movies/seat_selection.html', {
-                'theater':theaters, 
-                'seats':seats, 
-                'error':'Seat already booked'
-            })
+        # Check if seat is already booked
+        for seat_id in selected_Seats:
+            seat = get_object_or_404(Seat, id=seat_id, theater=theaters)
+            if seat.is_booked:
+                return render(request, 'movies/seat_selection.html', {
+                    'theaters': theaters,
+                    'seats': seats,
+                    'error': f'Seat {seat.seat_number} is already booked'
+                })
+        
+        # Calculate total amount
+        total_amount = theaters.pricing * len(selected_Seats)
 
         return render(request, 'movies/payment_page.html', {
-            'seat_id':seat_id,
-            'theater_id':theaters.id,
-            'movie_id':theaters.movie.id,
-            'amount':theaters.pricing
+            'seat_ids': selected_Seats,
+            'theater_id': theaters.id,
+            'movie_id': theaters.movie.id,
+            'amount': total_amount,
+            'seat_count': len(selected_Seats),
+            'theater_price': theaters.pricing 
         })
-    return render(request, 'movies/seat_selection.html', {'theaters':theaters, 'seats':seats})
+    
+    return render(request, 'movies/seat_selection.html', {'theaters': theaters, 'seats':seats})
 
 def movie_detail(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
@@ -90,65 +95,53 @@ def movie_detail(request, movie_id):
 def create_order(request):
     if request.method == "POST" :
 
-        # Getting data from the frontend:
-        seat_id = request.POST.get("seat_id")
+        reservation_ids = request.POST.get("reservation_ids", "").split(",")
         theater_id = request.POST.get("theater_id")
-        movie_id = request.POST.get("movie_id")
-
         user = request.user
-
-        # Fetching the exact details from the database
-        seat = Seat.objects.get(id=seat_id)
         theater = Theater.objects.get(id=theater_id)
-        movie = Movie.objects.get(id=movie_id)
 
-        # Check if there are any active reservations
-        reservation = Reservation.objects.filter(
-            user = user,
-            seat = seat,
-            status = 'RESERVED',
-            expires_at__gt = timezone.now()
-        ).first()
+        # Check if all reservations are active
+        reservations = []
+        for reservation_id in reservation_ids:
+            try:
+                reservation = Reservation.objects.get(
+                    id=reservation_id,
+                    user=user,
+                    status='RESERVED',
+                    expires_at__gt = timezone.now()
+                )
+                reservations.append(reservation)
+            except Reservation.DoesNotExist:
+                return JsonResponse({'error': 'One or more reservations not found or expired'}, status=400)
+            
+        # Calculate amount in paise
+        amount = theater.pricing * len(reservations) * 100
 
-        if not reservation:
-            return JsonResponse({'error': 'No active reservation found. Please book the seat again'}, status=400)
-
-        if reservation.is_expired():
-            return JsonResponse({'error': 'Reservation is expired. Please select the seat again.'}, status=400)
-                
-        # Converting Rupees to paise since Razorpay deals with paise
-        amount = theater.pricing * 100
-
-        # Connecting Razorpay with the backend
-        # Initializing client
         client = razorpay.Client(
             auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_SECRET_KEY)
         )
-
-        # Creating razorpay order
+    
         order = client.order.create({
-            "amount":amount,
-            "currency":"INR",
+            "amount": amount,
+            "currency": "INR",
             "payment_capture": 1,
         })
 
-        # Link Razorpay order to existing booking
-        booking = reservation.booking
+        booking = reservations[0].booking
         Payment.objects.create(
-            user = user,
-            booking = booking,
-            razorpay_order_id = order['id'],
-            amount = amount,
-            status = 'CREATED',
+            user=user,
+            booking=booking,
+            razorpay_order_id=order['id'],
+            amount=amount,
+            status='CREATED',
         )
 
-        # Returning data to the frontend
         return JsonResponse({
-            "order_id":order["id"],
-            "amount":amount,
-            "booking_id":booking.id,
-            "reservation_id":reservation.id,
-            "key":settings.RAZORPAY_KEY_ID
+            "order_id": order["id"],
+            "amount": amount,
+            "booking_id": booking.id,
+            "reservation_ids": reservation_ids,
+            "key": settings.RAZORPAY_KEY_ID,
         })
     
 def payment_success(request):
@@ -157,7 +150,7 @@ def payment_success(request):
         razorpay_order_id = request.POST.get('razorpay_order_id')
         razorpay_payment_id = request.POST.get('razorpay_payment_id')
         razorpay_signature = request.POST.get('razorpay_signature')
-        reservation_id = request.POST.get('reservation_id')
+        reservation_ids = request.POST.get('reservation_ids', '').split(',')
 
         # Verify payment signature
         body = razorpay_order_id + "|" + razorpay_payment_id
@@ -171,18 +164,28 @@ def payment_success(request):
             return JsonResponse({'error': 'Invalid Payment Signature'}, status=400)
         
         try:
-            reservation = Reservation.objects.get(id=reservation_id)
+            booking = None
+            seats = []
 
-            # Check if reservation is still valid
-            if reservation.is_expired():
-                return JsonResponse({'error': 'Resevation is expired'}, status=400)
+            for reservation_id in reservation_ids:
+                reservation = Reservation.objects.get(id=reservation_id)
+
+                if reservation.is_expired():
+                    return JsonResponse({'error': 'Reservation expired'}, status=400)
+                
+                reservation.status = 'COMPLETED'
+                reservation.save()
+
+                seat = reservation.seat
+                seat.is_booked = True
+                seat.save()
+                seats.append(seat)
+
+                booking = reservation.booking
             
-            booking = reservation.booking
+            # Confirm Booking
             booking.status = 'CONFIRMED'
             booking.save()
-
-            reservation.status = 'COMPLETED'
-            reservation.save()
 
             payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
             payment.razorpay_payment_id = razorpay_payment_id
@@ -190,15 +193,28 @@ def payment_success(request):
             payment.status = 'SUCCESS'
             payment.save()
 
+            # send confirmation email
+            try:
+                send_booking_confirmation(
+                    user=request.user,
+                    booking=booking,
+                    seats=seats,
+                    movie=booking.movie,
+                    theater=booking.theater
+                )
+                print('Email sent successfully')
+            except Exception as e:
+                print(f'Email error: {e}')
+
             return JsonResponse({
-                "message":"Payment successful! Booking Confirmed",
+                "message": "Payment successful! Booking Confirmed",
                 "booking_id": booking.id
             }, status=200)
         
         except Reservation.DoesNotExist:
             return JsonResponse({'error':'Reservation not found'}, status=404)
 
-def reserve_seat(request, seat_id):
+def reserve_seats(request):
     # allow only POST requests
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
@@ -207,71 +223,76 @@ def reserve_seat(request, seat_id):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Please login first'}, status=401)
     
+    seat_ids = request.POST.get('seat_ids', '').split(',')
+
+    if not seat_ids or seat_ids == ['']:
+        return JsonResponse({'error': 'No seats selected'}, status=400)
+
     try:
 
         # If booking fails the everthing gets rolled back automatically
         with transaction.atomic():
             # Locking the seat row
-            seat = Seat.objects.select_for_update().get(id=seat_id)
+            seats = []
+            for seat_id in seat_ids:
+                seat = Seat.objects.select_for_update().get(id=seat_id)
 
-            expired = Reservation.objects.filter(
-                seat = seat,
-                status = 'RESERVED',
-                expires_at__lt = timezone.now()
-            )
-            if expired.exists():
-                expired.update(status='EXPIRED')
-                seat.is_booked = False
-                seat.save()
+                expired = Reservation.objects.filter(
+                    seat = seat,
+                    status = 'RESERVED',
+                    expires_at__lt = timezone.now()
+                )
+                if expired.exists():
+                    expired.update(status='EXPIRED')
+                    seat.is_booked = False
+                    seat.save()
 
-            # Check seat availability
-            if seat.is_booked:
-                return JsonResponse({'error': 'Seat already booked'}, status=400)
-            
-            # Check if seat is already reserved
-            active_reservation = Reservation.objects.filter(
-                seat = seat,
-                status = 'RESERVED',
-                expires_at__gt = timezone.now()
-            ).first()
+                # Check seat availability
+                if seat.is_booked:
+                    return JsonResponse({'error': 'Seat already booked'}, status=400)
+                
+                # Check if seat is already reserved
+                active_reservation = Reservation.objects.filter(
+                    seat = seat,
+                    status = 'RESERVED',
+                    expires_at__gt = timezone.now()
+                ).first()
 
-            if active_reservation:
-                return JsonResponse({'error': 'Seat already reserved'}, status=400)
+                if active_reservation:
+                    return JsonResponse({'error': 'Seat already reserved'}, status=400)
+                
+                seats.append(seat)
 
-            booking, created = Booking.objects.get_or_create(
-                seat = seat,
-                defaults={
-                    'user': request.user,
-                    'movie': seat.theater.movie,
-                    'theater': seat.theater,
-                    'status': 'PENDING'
-                }
-            )
-
-            # Reset booking if not created
-            if not created:
-                booking.user = request.user
-                booking.status = 'PENDING'
-                booking.save()
-
-            # Create Reservation
-            reservation = Reservation.objects.create(
+            booking = Booking.objects.create(
                 user = request.user,
-                seat = seat,
-                booking = booking,
-                expires_at = timezone.now() + timedelta(minutes = 5)
+                movie=seats[0].theater.movie,
+                theater=seats[0].theater,
+                status='PENDING'
             )
+            booking.seats.set(seats)
+            booking.save()
 
-            seat.is_booked = True
-            seat.save()
+            reservations = []
+            for seat in seats:
+                reservation = Reservation.objects.create(
+                    user=request.user,
+                    seat=seat,
+                    booking=booking,
+                    expires_at=timezone.now() + timedelta(minutes=5)
+                )
+                seat.is_booked = True
+                seat.save()
+                reservations.append(reservation)
+
+            reservation_ids = [r.id for r in reservations]
 
         return JsonResponse({
-            'message': 'Seat reserved successfully',
-            'reservation_id':reservation.id,
-            'booking_id':booking.id,
-            'expires_at':reservation.expires_at,
+            'message': 'Seats reserved successfully',
+            'reservation_ids': reservation_ids,
+            'booking_id': booking.id,
+            'expires_at': reservations[0].expires_at,
         }, status=200)
-    
+
     except Seat.DoesNotExist:
         return JsonResponse({'error': 'Seat not found'}, status=404)
 
@@ -330,14 +351,14 @@ def payment_failed(request):
 #     except Reservation.DoesNotExist:
 #         return JsonResponse({'error': 'Reservation not found'}, status=404)
     
-def send_booking_confirmation(user, booking, seat, movie, theater):
+def send_booking_confirmation(user, booking, seats, movie, theater):
     subject = f'Booking Confirmed - {movie.name} | BookMySeat'
 
     html_content = render_to_string('emails/booking_confirmation.html', {
         'username': user.username,
         'movie_name': movie.name,
         'theater_name': theater.name,
-        'seats': [seat.seat_number]
+        'seats': [seat.seat_number for seat in seats]
     })
 
     email = EmailMessage(

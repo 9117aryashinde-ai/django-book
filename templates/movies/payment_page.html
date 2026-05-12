@@ -146,7 +146,7 @@
 
             <div class="payment-body">
                 <div class="amount-row">
-                    <span class="desc">Total amount</span>
+                    <span class="desc">{{ seat_count }} Seat(s) x ₹{{ theater_price }}</span>
                     <span class="price">₹{{ amount }}</span>
                 </div>
 
@@ -163,29 +163,33 @@
         </div>
     </div>
 
+    {% for seat_id in seat_ids %}
+    <input type="hidden" class="seat-id-input" value="{{ seat_id }}">
+    {% endfor %}
     <!-- Sending hidden data to JS, JS uses this to call create_order (backend) -->
-    <input type="hidden" id="seat_id" value="{{ seat_id }}">
     <input type="hidden" id="theater_id" value="{{ theater_id }}">
     <input type="hidden" id="movie_id" value="{{ movie_id }}">
     <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" id="seat_count" value="{{ seat_count }}">
 
     <script>
         document.getElementById("pay-btn").onclick=function() {
             // alert("Pay button clicked"); used to check whether the pay button is clicked
 
             // Fetching the values from the hidden inputs
-            let seat_id = document.getElementById("seat_id").value
+            let seat_ids = Array.from(document.querySelectorAll('.seat-id-input')).map(input=>input.value)
             let theater_id = document.getElementById("theater_id").value
             let movie_id = document.getElementById("movie_id").value
             let csrf_token = document.getElementById("csrf_token").value
 
             // Reserve seat
-            fetch(`/movies/reserve-seat/${seat_id}/`, {
+            fetch('/movies/reserve-seats/', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                     "X-CSRFToken": csrf_token
-                }
+                },
+                body: `seat_ids=${seat_ids.join(',')}`
             })
             .then(response => response.json())
             .then(reservationData => {
@@ -195,7 +199,7 @@
                 }
 
                 console.log("Seat Reserved", reservationData);
-                let reservation_id = reservationData.reservation_id;
+                let reservation_ids = reservationData.reservation_ids.join(',');
 
                 //  Create Razorpay order
                 fetch('/movies/create-order/', {
@@ -204,7 +208,7 @@
                         "Content-Type": "application/x-www-form-urlencoded",
                         "X-CSRFToken": csrf_token
                     },
-                    body: `seat_id=${seat_id}&theater_id=${theater_id}&movie_id=${movie_id}`
+                    body: `reservation_ids=${reservation_ids}&theater_id=${theater_id}&movie_id=${movie_id}`
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -233,7 +237,7 @@
                                     "Content-Type": "application/x-www-form-urlencoded",
                                     "X-CSRFToken": csrf_token 
                                 },
-                                body: `razorpay_order_id=${response.razorpay_order_id}&razorpay_payment_id=${response.razorpay_payment_id}&razorpay_signature=${response.razorpay_signature}&reservation_id=${reservation_id}`
+                                body: `razorpay_order_id=${response.razorpay_order_id}&razorpay_payment_id=${response.razorpay_payment_id}&razorpay_signature=${response.razorpay_signature}&reservation_ids=${reservation_ids}`
                             })
                             .then(res => res.json())
                             .then(successData => {
@@ -257,7 +261,7 @@
                                         "Content-Type": "application/x-www-form-urlencoded",
                                         "X-CSRFToken": csrf_token 
                                     },
-                                    body: `reservation_id=${reservation_id}`
+                                    body: `reservation_ids=${reservation_ids}`
                                 })
                                 .then(res => res.json())
                                 .then(data => {
@@ -282,7 +286,7 @@
                                 "Content-Type": "application/x-www-form-urlencoded",
                                 "X-CSRFToken": csrf_token 
                             },
-                            body: `reservation_id=${reservation_id}`
+                            body: `reservation_ids=${reservation_ids}`
                         })
                         .then(res => res.json())
                         .then(data => {

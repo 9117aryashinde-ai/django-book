@@ -167,4 +167,18 @@
     <button type="submit">Book Selected seats</button>
 </form> -->
 
+<script>
+    document.querySelectorAll(".seat input[type='checkbox']").forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            let seatDiv = this.closest('.seat');
+            if (this.checked) {
+                seatDiv.classList.add('selected');
+            }
+            else {
+                seatDiv.classList.remove('selected');
+            }
+        });
+    })
+</script>
+
 {% endblock %}
