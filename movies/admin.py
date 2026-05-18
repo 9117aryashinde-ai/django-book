@@ -5,9 +5,14 @@ from .models import Movie, Theater, Seat, Booking, Payment, Reservation
 class MovieAdmin(admin.ModelAdmin):
     list_display = ['name', 'rating', 'cast', 'description']
 
+class SeatInline(admin.TabularInline):
+    model = Seat
+    extra = 10 
+
 @admin.register(Theater)
 class TheaterAdmin(admin.ModelAdmin):
     list_display = ['name', 'movie', 'time']
+    inlines = [SeatInline]
 
 @admin.register(Seat)
 class SeatAdmin(admin.ModelAdmin):
@@ -16,10 +21,3 @@ class SeatAdmin(admin.ModelAdmin):
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = ['user', 'movie', 'theater', 'booked_at']
-
-    # def get_seats(self, obj):
-    #     return ", ".join([seat.seat_number for seat in obj.seats.all()])
-    
-    # get_seats.short_description = "Seats"
-
-admin.site.register(Reservation)
