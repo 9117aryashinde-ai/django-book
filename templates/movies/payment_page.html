@@ -290,7 +290,7 @@
                     rzp.on('payment.failed', function(response) {
                         payBtn.disabled = false;
                         payBtn.innerText = "Pay Now";
-                        fetch('/movies/payment/failed', {
+                        fetch('/movies/payment/failed/', {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/x-www-form-urlencoded",
