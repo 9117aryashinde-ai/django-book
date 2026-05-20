@@ -58,7 +58,7 @@ class Booking(models.Model):
     )
 
     def __str__(self):
-        return f'Booking by {self.user.username} for {self.seat.seat_number} at {self.theater.name}'
+        return f'Booking by {self.user.username} at {self.theater.name}'
 
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
