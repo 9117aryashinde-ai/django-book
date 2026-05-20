@@ -12,6 +12,7 @@ from django.core.mail import EmailMultiAlternatives
 import razorpay
 from django.db import transaction
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 import hmac
 import hashlib
 
@@ -48,6 +49,7 @@ def theater_list(request, movie_id):
     theater = Theater.objects.filter(movie=movie)
     return render(request, 'movies/theater_list.html', {'movie':movie, 'theaters':theater})
 
+@never_cache
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
     theaters = get_object_or_404(Theater, id=theater_id)
