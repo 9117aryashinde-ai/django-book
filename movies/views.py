@@ -298,21 +298,22 @@ def reserve_seats(request):
 
 def payment_failed(request):
     if request.method == 'POST':
-        reservation_id = request.POST.get("reservation_id")
+        reservation_ids = request.POST.get("reservation_ids", "").split(",")
 
         try:
-            reservation = Reservation.objects.get(id=reservation_id)
+            for reservation_id in reservation_ids:
+                reservation = Reservation.objects.get(id=reservation_id.strip())
 
-            seat = reservation.seat
-            seat.is_booked = False
-            seat.save()
+                seat = reservation.seat
+                seat.is_booked = False
+                seat.save()
 
-            reservation.status = 'EXPIRED'
-            reservation.save()
+                reservation.status = 'EXPIRED'
+                reservation.save()
 
-            booking = reservation.booking
-            booking.status = 'FAILED'
-            booking.save()
+                booking = reservation.booking
+                booking.status = 'FAILED'
+                booking.save()
 
             return JsonResponse({'message': 'Seat relesead successfully'}, status=200)
         
