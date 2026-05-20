@@ -13,5 +13,6 @@ urlpatterns = [
     path('reserve-seats/', views.reserve_seats, name='reserve_seats'),
     path('payment/success/', views.payment_success, name='payment_success'),
     path('payment/failed/', views.payment_failed, name='payment_failed'),
+    path('payment/', views.payment_page, name='payment_page'),
     # path('mock-successful-payment/<int:reservation_id>/', views.mock_successful_payment, name='mock_successful_payment'),
 ]

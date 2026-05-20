@@ -278,7 +278,7 @@
                                 .then(data => {
                                     console.log('Seat Released: ', data);
                                     alert("Payment cancelled. Seat has been released");
-                                    window.history.back();
+                                    window.location.href = '/';
                                 })
                             }
                         },
@@ -306,6 +306,7 @@
                         .then(data => {
                             console.log('Seat Released:', data)
                             alert('Payment failed. Seat has been released')
+                            window.location.href = '/'
                         })
                     });
 
@@ -319,6 +320,13 @@
                 console.error("Reserve seat error: ", error);
             });
         }
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted && !sessionStorage.getItem('changingSeats')) {
+                window.location.href = '/';
+            }
+            sessionStorage.removeItem('changingSeats')
+        });
 
         // document.getElementById("mock-btn").onclick = function() {
         //     let seat_id = document.getElementById("seat_id").value;

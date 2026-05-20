@@ -73,14 +73,16 @@ def book_seats(request, theater_id):
         # Calculate total amount
         total_amount = theaters.pricing * len(selected_Seats)
 
-        return render(request, 'movies/payment_page.html', {
+        request.session['payment_data'] = {
             'seat_ids': selected_Seats,
             'theater_id': theaters.id,
             'movie_id': theaters.movie.id,
             'amount': total_amount,
             'seat_count': len(selected_Seats),
-            'theater_price': theaters.pricing 
-        })
+            'theater_price': theaters.pricing
+        }
+
+        return redirect('payment_page')
     
     return render(request, 'movies/seat_selection.html', {'theaters': theaters, 'seats':seats})
 
@@ -221,6 +223,9 @@ def reserve_seats(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     
+    if 'payment_data' in request.session:
+        del request.session['payment_data']
+    
     # allow only logged in users
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Please login first'}, status=401)
@@ -321,38 +326,6 @@ def payment_failed(request):
         
         except Reservation.DoesNotExist:
             return JsonResponse({'error': 'Reservation not found'}, status=404)
-
-# View for mocking successful payment
-# def mock_successful_payment(request, reservation_id):
-#     try:
-#         reservation = Reservation.objects.get(id=reservation_id)
-
-#         # Confirm booking
-#         booking = reservation.booking
-#         booking.status = 'CONFIRMED'
-#         booking.save()
-
-#         # Save Reservation
-#         reservation.status = 'COMPLETED'
-#         reservation.save()
-
-#         # Update seat
-#         seat = reservation.seat
-#         seat.is_booked = True
-#         seat.save()
-
-#         send_booking_confirmation(
-#             user=reservation.user,
-#             booking=booking,
-#             seat=seat,
-#             movie=booking.movie,
-#             theater=booking.theater
-#         )
-
-#         return JsonResponse({'message': 'Mock Payment Successful', 'booking_id':booking.id}, status=200)
-    
-#     except Reservation.DoesNotExist:
-#         return JsonResponse({'error': 'Reservation not found'}, status=404)
     
 def send_booking_confirmation(user, booking, seats, movie, theater):
     subject = f'Booking Confirmed - {movie.name} | BookMySeat'
@@ -371,3 +344,13 @@ def send_booking_confirmation(user, booking, seats, movie, theater):
     )
     email.content_subtype = 'html'
     email.send()
+
+@never_cache
+@login_required(login_url='/login/')
+def payment_page(request):
+    payment_data = request.session.get('payment_data')
+
+    if not payment_data:
+        return redirect('/')
+
+    return render(request, 'movies/payment_page.html', payment_data)

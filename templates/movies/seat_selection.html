@@ -179,6 +179,9 @@
             }
         });
     })
+    if (sessionStorage.getItem('changingSeats')) {
+        sessionStorage.removeItem('changingSeats');
+    }
 </script>
 
 {% endblock %}
